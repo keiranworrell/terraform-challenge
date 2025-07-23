@@ -23,6 +23,7 @@ variable "instance_type" {
 variable "key_name" {
   description = "Key pair for SSH access"
   type        = string
+  default     = null
 }
 
 variable "security_group_ids" {
