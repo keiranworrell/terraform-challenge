@@ -58,6 +58,7 @@ module "alb" {
 
 
 module "rds" {
+  source              = "./modules/rds"
   name                = "${var.name}-rds"
   db_username         = var.db_username
   db_password         = var.db_password
@@ -66,25 +67,22 @@ module "rds" {
   vpc_id              = module.network.vpc_id
   subnet_ids          = var.private_subnets
   security_group_ids  = [aws_security_group.db_sg.id]
-
-  tags = {
-    local.tags
-  }
-
+  tags = local.tags
 }
 
 module "ec2_asg" {
-  source = "./modules/ec2-asg"
-  name = var.name
-  subnets = module.network.public_subnets
-  key_name = var.ssh_key_name
-  security_group_ids = [module.app_sg.security_group_id]
-  desired_capacity = 2
-  min_size         = 2
-  max_size         = 4
-  user_data = var.ec2_user_data
-  tags = local.tags
-  target_group_arns = module.alb.target_group_arn
+  source              = "./modules/ec2-asg"
+  name                = var.name
+  subnets             = module.network.public_subnets
+  key_name            = var.ssh_key_name
+  security_group_ids  = [module.app_sg.security_group_id]
+  desired_capacity    = 2
+  min_size            = 2
+  max_size            = 4
+  user_data           = var.ec2_user_data
+  target_group_arns   = module.alb.target_group_arn
+  ami_id              = data.aws_ami.al2023.id
+  tags                = local.tags
 }
 
 
