@@ -1,3 +1,5 @@
+data "aws_availability_zones" "current" {}
+
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
 
