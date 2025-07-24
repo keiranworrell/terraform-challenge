@@ -16,7 +16,7 @@ provider "aws" {
 module "network" {
   source                = "./modules/network"
   vpc_cidr              = var.vpc_cidr
-  name                  = var.name
+  name                  = "${var.name}-${var.environment}"
   public_subnet_count   = var.public_subnet_count
   private_subnet_count  = var.private_subnet_count
   newbits               = var.newbits
@@ -25,7 +25,7 @@ module "network" {
 
 module "alb_sg" {
   source        = "./modules/security_group"
-  name          = "${var.name}-alb-sg"
+  name          = "${var.name}-${var.environment}-alb-sg"
   ingress_rules = var.alb_ingress_rules
   vpc_id        = module.network.vpc_id
   tags          = local.tags
@@ -33,7 +33,7 @@ module "alb_sg" {
 
 module "app_sg" {
   source        = "./modules/security_group"
-  name          = "${var.name}-app-sg"
+  name          = "${var.name}-${var.environment}-app-sg"
   ingress_rules = var.app-ingress_rules
   vpc_id        = module.network.vpc_id
   tags          = local.tags
@@ -41,7 +41,7 @@ module "app_sg" {
 
 module "rds_sg" {
   source        = "./modules/security_group"
-  name          = "${var.name}-rds-sg"
+  name          = "${var.name}-${var.environment}-rds-sg"
   ingress_rules = var.rds-ingress_rules
   vpc_id        = module.network.vpc_id
   tags          = local.tags
@@ -49,7 +49,7 @@ module "rds_sg" {
 
 module "alb" {
   source                = "./modules/alb"
-  name                  = var.name
+  name                  = "${var.name}-${var.environment}"
   vpc_id                = module.network.vpc_id
   subnets               = module.network.public_subnets
   security_group_ids    = module.alb_sg.security_group_id
@@ -59,7 +59,7 @@ module "alb" {
 
 module "rds" {
   source              = "./modules/rds"
-  name                = "${var.name}-rds"
+  name                = "${var.name}-${var.environment}-rds"
   db_username         = var.db_username
   db_password         = var.db_password
   instance_class      = var.rds_instance_class
@@ -67,12 +67,12 @@ module "rds" {
   vpc_id              = module.network.vpc_id
   subnet_ids          = var.private_subnets
   security_group_ids  = [aws_security_group.db_sg.id]
-  tags = local.tags
+  tags                = local.tags
 }
 
 module "ec2_asg" {
   source              = "./modules/ec2-asg"
-  name                = var.name
+  name                = "${var.name}-${var.environment}"
   subnets             = module.network.private_subnets
   key_name            = var.ssh_key_name
   security_group_ids  = [module.app_sg.security_group_id]
