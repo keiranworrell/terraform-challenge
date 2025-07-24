@@ -73,7 +73,7 @@ module "rds" {
 module "ec2_asg" {
   source              = "./modules/ec2-asg"
   name                = var.name
-  subnets             = module.network.public_subnets
+  subnets             = module.network.private_subnets
   key_name            = var.ssh_key_name
   security_group_ids  = [module.app_sg.security_group_id]
   desired_capacity    = 2
