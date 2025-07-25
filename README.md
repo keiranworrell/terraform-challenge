@@ -1,4 +1,4 @@
-To create this solution I have moved the provided network.tf file to create a module which can be reused, allowing various applications and services to create their own VPC. 
+To create this solution I have moved the provided network.tf file to create a module which can be reused, allowing various applications and services to create their own VPC.
 
 ### Assumptions
 
@@ -14,6 +14,9 @@ I have assumed that a terraform-states S3 bucket exists to store the state file 
 
 I've also assumed minimal difference in environment config for dev and prod, so their terraform.tfvars files are relatively small. If further differences in configuration are needed, such as different vpc_cidr block, then the default in the root variables.tf could be removed and the variable set in each terraform.tfvars file.
 
+Another assumption made is the size of the Auto Scale Group for the EC2s. I have set the desired size to 2, the minimum size to 2, and the maximum size to 4. This is exposed in the root variables.tf, but if it was desired to have more instances for the prod environment than the dev, these defaults could be removed and then new values set in each environment's terraform.tfvars file.
+
+I have also assumed that the desired database is mysql version 8.0, running on a db.t3.micro RDS instance. This can easily be configured by altering the variables.tf in the RDS module, or by passing in values for the db_engine, db_engine_version, and instance_class variables when calling the module. 
 
 ### Additions
 
@@ -21,17 +24,16 @@ I've created reusable modules for each resource being created. These modules are
 
 I've also created a module for a security group which can be reused. I've used this multiple times for this application, creating a security group for each of the ALB, EC2s, and RDS. This ensures that the ALB can recieve any incoming traffic, the EC2s can only be contacted via the ALB, and the RDS can only be reached from these EC2s.
 
-locals.tf contains a tag definition that is passed into each module, so other applications that use the modules can follow their own tagging structure. By keeping the tags defined in locals.tf it will be easy to add new tags to this environment, such as details on infrastructure ownership and cost tracking. 
+locals.tf contains a tag definition that is passed into each module, so other applications that use the modules can follow their own tagging structure. By keeping the tags defined in locals.tf it will be easy to add new tags to this environment, such as details on infrastructure ownership and cost tracking.
 
 This application can be deployed using the root main.tf file, but I have set up the environments directory to define different backends and variables for a dev and prod environment. To deploy this application you could run the following commands from the root directory:
 
 ```
 terraform init -backend-config=./environments/dev/backend.tf
-terraform apply -var-file="./environments/dev/terraform.tfvars" -var "db_password=${DB_PASSWORD}"-var "db_username=${DB_USERNAME}"
+terraform apply -var-file="./environments/dev/terraform.tfvars" -var "db_password=${DB_PASSWORD}" -var "db_username=${DB_USERNAME}"
 ```
 
-This command also sets the database username and password variables. I haven't included these credentials in any file, and enforced that they must be supplied in the terraform apply command, to ensure that they are sourced correctly from a secret manager upon runtime. 
-
+This command also sets the database username and password variables. I haven't included these credentials in any file, and enforced that they must be supplied in the terraform apply command, to ensure that they are sourced correctly from a secret manager upon runtime.
 
 ### Further Use
 
@@ -50,17 +52,15 @@ resource "aws_ssm_parameter" "alb_dns" {
 
 This would mean that later applications could retrieve the DNS name with the command: `aws ssm get-parameter --name "/app/dev/alb_dns" --query Parameter.Value --output text`
 
-
 ### CD Integration
 
 To integrate continuous deployment of this application, GitHub actions could be set up to execute a Terraform Plan on PR creation. The output of this plan could then be added to the PR as a comment for review. Once this PR has been approved and merged, further automation could be set up to execute the Terraform apply command for the dev environment.
 
-With this system, sensitive variables such as db_username and db_password could be injected into the apply command from Github secrets manager. 
+With this system, sensitive variables such as db_username and db_password could be injected into the apply command from Github secrets manager.
 
 A separate pipeline could then be set up to execute the same Terraform plan and apply for the prod environment, ensuring that any changes are rolled out and tested in dev before promotion to prod.
 
 Another consideration to take is to limit the IAM role used for this automation to ensure that this CD process only has permissions to interact with these resources, aligned with least-privilege principles.
-
 
 An additional pipeline could be set up to run the command:
 

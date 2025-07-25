@@ -38,11 +38,6 @@ variable "allocated_storage" {
   default     = 20
 }
 
-variable "vpc_id" {
-  description = "VPC ID"
-  type        = string
-}
-
 variable "subnet_ids" {
   description = "List of private subnet IDs for DB subnet group"
   type        = list(string)

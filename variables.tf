@@ -86,7 +86,7 @@ variable "app_ingress_rules" {
   ]
 }
 
-variable "db_ingress_rules" {
+variable "rds_ingress_rules" {
   description = "Ingress rules for the EC2 security group"
   type = list(object({
     from_port     = number
@@ -148,4 +148,22 @@ variable "db_password" {
   description = "Master password"
   type        = string
   sensitive   = true
+}
+
+variable "desired_ec2s" {
+  description = "Number of instances desired"
+  type        = number
+  default     = 2
+}
+
+variable "min_ec2s" {
+  description = "Minimum size of ASG"
+  type        = number
+  default     = 2
+}
+
+variable "max_ec2s" {
+  description = "Maximum size of ASG"
+  type        = number
+  default     = 4
 }

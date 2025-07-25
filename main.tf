@@ -34,7 +34,7 @@ module "alb_sg" {
 module "app_sg" {
   source        = "./modules/security_group"
   name          = "${var.name}-${var.environment}-app-sg"
-  ingress_rules = var.app-ingress_rules
+  ingress_rules = var.app_ingress_rules
   vpc_id        = module.network.vpc_id
   tags          = local.tags
 }
@@ -42,7 +42,7 @@ module "app_sg" {
 module "rds_sg" {
   source        = "./modules/security_group"
   name          = "${var.name}-${var.environment}-rds-sg"
-  ingress_rules = var.rds-ingress_rules
+  ingress_rules = var.rds_ingress_rules
   vpc_id        = module.network.vpc_id
   tags          = local.tags
 }
@@ -50,7 +50,6 @@ module "rds_sg" {
 module "alb" {
   source                = "./modules/alb"
   name                  = "${var.name}-${var.environment}"
-  vpc_id                = module.network.vpc_id
   subnets               = module.network.public_subnets
   security_group_ids    = module.alb_sg.security_group_id
   tags                  = local.tags
@@ -65,8 +64,8 @@ module "rds" {
   instance_class      = var.rds_instance_class
   allocated_storage   = var.rds_storage
   vpc_id              = module.network.vpc_id
-  subnet_ids          = var.private_subnets
-  security_group_ids  = [aws_security_group.db_sg.id]
+  subnet_ids          = module.network.private_subnets
+  security_group_ids  = [module.rds_sg.security_group_id]
   tags                = local.tags
 }
 
@@ -76,9 +75,9 @@ module "ec2_asg" {
   subnets             = module.network.private_subnets
   key_name            = var.ssh_key_name
   security_group_ids  = [module.app_sg.security_group_id]
-  desired_capacity    = 2
-  min_size            = 2
-  max_size            = 4
+  desired_capacity    = var.desired_ec2s
+  min_size            = var.min_ec2s
+  max_size            = var.max_ec2s
   user_data           = var.ec2_user_data
   target_group_arns   = module.alb.target_group_arn
   ami_id              = data.aws_ami.al2023.id

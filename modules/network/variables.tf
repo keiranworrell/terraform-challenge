@@ -1,7 +1,6 @@
 variable "name" {
   type        = string
-  default     = "cint-code-test"
-  description = "Root name for resources in this project"
+  description = "Name prefix for network resources"
 }
 
 variable "vpc_cidr" {
@@ -29,5 +28,7 @@ variable "private_subnet_count" {
 }
 
 variable "tags" {
-  type = map(string)
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default     = {}
 }

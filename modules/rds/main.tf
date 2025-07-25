@@ -1,5 +1,5 @@
 resource "aws_db_subnet_group" "subnet_group" {
-  name       = "${var.db_name}-subnet-group"
+  name       = "${var.name}-db-subnet-group"
   subnet_ids = var.subnet_ids
   tags       = var.tags
 }
@@ -16,7 +16,7 @@ resource "aws_db_instance" "db" {
   username                = var.db_username
   password                = var.db_password
   skip_final_snapshot     = true
-  multi_az                = false
+  multi_az                = length(var.subnet_ids) >= 2 ? true : false
   publicly_accessible     = false
 
   tags = var.tags
